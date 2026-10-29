@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Traffic Dodger</title>
+<style>
+  body{margin:0;background:#1b1b1b;color:#fff;font-family:Arial,sans-serif;text-align:center}
+  h1{margin:12px 0 4px;font-size:22px}
+  canvas{background:#444;border:3px solid #fff;max-width:95vw}
+  .btns{margin:10px}
+  button{font-size:22px;padding:10px 28px;margin:4px;border:0;border-radius:8px;background:#f5a623;cursor:pointer}
+</style>
+</head>
+<body>
+<h1>Traffic Dodger</h1>
+<div>Score: <span id="score">0</span> | Best: <span id="best">0</span></div>
+<canvas id="c" width="300" height="480"></canvas>
+<div class="btns">
+  <button id="L">&larr;</button><button id="R">&rarr;</button>
+</div>
+<div>Arrow keys or buttons. Press Space to restart.</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+const W=cv.width,H=cv.height,LANES=3,LW=W/LANES;
+let lane,traffic,score,best=0,speed,over,tick,dash=0;
+function reset(){lane=1;traffic=[];score=0;speed=4;over=false;tick=0}
+function drawCar(x,y,color){
+  ctx.fillStyle=color;ctx.fillRect(x-18,y-32,36,64);
+  ctx.fillStyle='#9ad';ctx.fillRect(x-14,y-20,28,14);
+  ctx.fillStyle='#000';
+  ctx.fillRect(x-22,y-26,5,16);ctx.fillRect(x+17,y-26,5,16);
+  ctx.fillRect(x-22,y+10,5,16);ctx.fillRect(x+17,y+10,5,16);
+}
+function loop(){
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.setLineDash([25,25]);
+  dash=(dash+speed)%50;ctx.lineDashOffset=-dash;
+  for(let i=1;i<LANES;i++){ctx.beginPath();ctx.moveTo(i*LW,0);ctx.lineTo(i*LW,H);ctx.stroke()}
+  ctx.setLineDash([]);
+  if(!over){
+    tick++;
+    if(tick%Math.max(25,60-Math.floor(score/50))===0)
+      traffic.push({l:Math.floor(Math.random()*LANES),y:-40,c:['#e33','#3a3','#c3c','#ee3'][Math.floor(Math.random()*4)]});
+    traffic.forEach(t=>t.y+=speed);
+    traffic=traffic.filter(t=>{if(t.y>H+40){score+=10;return false}return true});
+    speed=4+score/150;
+    traffic.forEach(t=>{if(t.l===lane&&t.y>H-130&&t.y<H-30)over=true});
+    if(over&&score>best)best=score;
+  }
+  traffic.forEach(t=>drawCar(t.l*LW+LW/2,t.y,t.c));
+  drawCar(lane*LW+LW/2,H-70,'#2196f3');
+  document.getElementById('score').textContent=score;
+  document.getElementById('best').textContent=best;
+  if(over){
+    ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(0,H/2-50,W,100);
+    ctx.fillStyle='#fff';ctx.font='28px Arial';ctx.textAlign='center';
+    ctx.fillText('CRASH! Game Over',W/2,H/2);
+    ctx.font='16px Arial';ctx.fillText('Press Space to restart',W/2,H/2+30);
+  }
+  requestAnimationFrame(loop);
+}
+function left(){if(!over&&lane>0)lane--}
+function right(){if(!over&&lane<LANES-1)lane++}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft')left();
+  if(e.key==='ArrowRight')right();
+  if(e.key===' '&&over)reset();
+});
+document.getElementById('L').onclick=left;
+document.getElementById('R').onclick=()=>{over?reset():right()};
+reset();loop();
+</script>
+</body>
+</html>

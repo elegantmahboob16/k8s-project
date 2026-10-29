@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: car-game-deployment
+  labels:
+    app: car-game
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: car-game
+  template:
+    metadata:
+      labels:
+        app: car-game
+    spec:
+      containers:
+        - name: car-game
+          image: mahboob16/car-game:v1
+          ports:
+            - containerPort: 80

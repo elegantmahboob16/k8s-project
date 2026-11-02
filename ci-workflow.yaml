@@ -1,0 +1,31 @@
+name: K8s Test - Deploy Car Game on kind
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  deploy-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f deployment.yaml
+          kubectl apply -f service.yaml
+
+      - name: Wait for deployment to be ready
+        run: kubectl wait --for=condition=available deployment --all --timeout=120s
+
+      - name: Show cluster status
+        run: |
+          kubectl get pods
+          kubectl get svc
